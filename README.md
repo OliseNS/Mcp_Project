@@ -71,6 +71,20 @@ python -m mcp_server.api
 streamlit run streamlit_app.py
 ```
 
+## 🚀 Deployment on Railway
+
+1. **Set environment variables**: Ensure you have a `.env` file with your OpenRouter API key and any other required settings (see `mcp_server/config.py`).
+
+2. **Deploy**: Push your repository to Railway.
+
+3. **Service settings**:
+   - Set the start command to `python main.py`.
+   - Set the service port to `8000`.
+
+4. **Access**: Once deployed, your MCP server will be available at `https://<your-railway-app>.railway.app/` and will respond to health checks at `/health`.
+
+**Note:** Streamlit is no longer included or required for this deployment.
+
 ## 🐳 Docker Deployment
 
 ### Using Docker Compose (Recommended)

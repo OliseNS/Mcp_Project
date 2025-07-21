@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare MCP Server</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Healthcare MCP Server</h1>
+        <!-- About MCP Section -->
+        <div id="about-mcp" style="background:#eaf2fb; border-radius:8px; padding:16px 14px 10px 14px; margin-bottom:18px;">
+            <h2 style="font-size:1.1em; color:#2a5d9f; margin-top:0;">What is MCP?</h2>
+            <p><b>MCP</b> stands for <b>Model Context Protocol</b>. In this app, it means your healthcare questions are answered by an AI that uses both your query and relevant medical context from a knowledge base. <br><br>
+            <b>How it works:</b></p>
+            <ol style="margin-left:18px;">
+                <li><b>You ask a question</b> (optionally add patient context).</li>
+                <li><b>The system searches</b> a medical knowledge base for relevant information.</li>
+                <li><b>AI combines</b> your question and the found context to generate a detailed answer.</li>
+                <li><b>You get a response</b> with references and a medical disclaimer.</li>
+            </ol>
+            <div style="margin-top:8px; font-size:0.97em; color:#2a5d9f;">
+                <b>Tip:</b> Adding patient context (e.g., age, symptoms, history) helps the AI provide more tailored answers.
+            </div>
+        </div>
+        <form id="query-form">
+            <label for="query">Ask a medical question:</label>
+            <input type="text" id="query" name="query" required>
+            <label for="user_context">Patient context <span title="Extra details about the patient (e.g., age, symptoms, history) help the AI give more relevant answers." style="cursor:help; color:#2a5d9f;">[?]</span> (optional):</label>
+            <textarea id="user_context" name="user_context" rows="2" style="resize:vertical; padding:8px; border-radius:6px; border:1px solid #bfc9d9; font-size:1rem;"></textarea>
+            <div id="example-contexts" style="font-size:0.95em; color:#555; margin-bottom:8px;"></div>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="response" style="min-height:60px;"></div>
+        <div id="extra-features" style="margin-top:32px;">
+            <h2 style="font-size:1.1em; color:#2a5d9f;">Healthcare Tools</h2>
+            <form id="symptom-form" style="margin-bottom:12px;">
+                <label for="symptoms">Assess symptoms (comma separated):</label>
+                <input type="text" id="symptoms" name="symptoms" placeholder="e.g. cough, fever, headache">
+                <button type="submit">Assess</button>
+            </form>
+            <form id="medication-form" style="margin-bottom:12px;">
+                <label for="medication">Medication info:</label>
+                <input type="text" id="medication" name="medication" placeholder="e.g. ibuprofen">
+                <button type="submit">Get Info</button>
+            </form>
+            <form id="knowledge-search-form">
+                <label for="knowledge-query">Search medical knowledge:</label>
+                <input type="text" id="knowledge-query" name="knowledge-query" placeholder="e.g. diabetes treatment">
+                <button type="submit">Search</button>
+            </form>
+            <div id="feature-response" style="margin-top:10px;"></div>
+        </div>
+        <div id="server-status" style="margin-top:24px; font-size:0.95em; color:#2a5d9f;"></div>
+        <div id="disclaimer" style="margin-top:16px; font-size:0.95em; color:#a00; text-align:center; background:#fff6f6; border-radius:6px; padding:10px 8px;">
+            <b>Disclaimer:</b> This server uses the Model Context Protocol (MCP) to provide information for educational purposes only. It is <u>not</u> a substitute for professional medical advice, diagnosis, or treatment. Always consult a healthcare provider for personal medical concerns.
+        </div>
+    </div>
+    <script>
+        // Example contexts
+        fetch('/example-contexts').then(r=>r.json()).then(data=>{
+            if(data.examples && data.examples.length){
+                document.getElementById('example-contexts').innerHTML = '<b>Example contexts:</b><ul style="margin:4px 0 0 16px;">'+data.examples.map(e=>`<li>${e}</li>`).join('')+'</ul>';
+            }
+        });
+        // Query form
+        document.getElementById('query-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = document.getElementById('query').value;
+            const user_context = document.getElementById('user_context').value;
+            document.getElementById('response').innerHTML = 'Loading...';
+            const res = await fetch('/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, user_context })
+            });
+            const data = await res.json();
+            if (data.response) {
+                // Render markdown using marked
+                document.getElementById('response').innerHTML = '<b>Response:</b><br>' + marked.parse(data.response);
+            } else if (data.error) {
+                document.getElementById('response').innerHTML = `<b>Error:</b> ${data.error}`;
+            } else {
+                document.getElementById('response').innerHTML = 'No response.';
+            }
+        });
+        // Symptom assessment
+        document.getElementById('symptom-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const symptoms = document.getElementById('symptoms').value.split(',').map(s=>s.trim()).filter(Boolean);
+            document.getElementById('feature-response').innerHTML = 'Assessing...';
+            const res = await fetch('/assess-symptoms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symptoms })
+            });
+            const data = await res.json();
+            if (data.assessment) {
+                document.getElementById('feature-response').innerHTML = '<b>Assessment:</b><br>' + marked.parse(data.assessment);
+            } else if (data.error) {
+                document.getElementById('feature-response').innerHTML = `<b>Error:</b> ${data.error}`;
+            } else {
+                document.getElementById('feature-response').innerHTML = 'No assessment.';
+            }
+        });
+        // Medication info
+        document.getElementById('medication-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const medication_name = document.getElementById('medication').value;
+            document.getElementById('feature-response').innerHTML = 'Loading...';
+            const res = await fetch('/medication-info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ medication_name })
+            });
+            const data = await res.json();
+            if (data.information) {
+                document.getElementById('feature-response').innerHTML = '<b>Medication Info:</b><br>' + marked.parse(data.information);
+            } else if (data.error) {
+                document.getElementById('feature-response').innerHTML = `<b>Error:</b> ${data.error}`;
+            } else {
+                document.getElementById('feature-response').innerHTML = 'No information.';
+            }
+        });
+        // Knowledge search
+        document.getElementById('knowledge-search-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const query = document.getElementById('knowledge-query').value;
+            document.getElementById('feature-response').innerHTML = 'Searching...';
+            const res = await fetch('/knowledge/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            const data = await res.json();
+            if (data.results && data.results.length) {
+                document.getElementById('feature-response').innerHTML = `<b>Knowledge Results:</b><ul style='margin:4px 0 0 16px;'>`+data.results.map(r=>`<li>${marked.parseInline(r.text)}`)+`</ul>`;
+            } else if (data.error) {
+                document.getElementById('feature-response').innerHTML = `<b>Error:</b> ${data.error}`;
+            } else {
+                document.getElementById('feature-response').innerHTML = 'No results.';
+            }
+        });
+        // Server health status
+        fetch('/health').then(r=>r.json()).then(data=>{
+            document.getElementById('server-status').innerHTML = `<b>Server status:</b> ${data.status} (${data.service})`;
+        });
+    </script>
+</body>
+</html> 

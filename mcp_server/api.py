@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from .agent import HealthcareAgent
 from .config import Config
@@ -10,8 +10,8 @@ CORS(app)
 agent = HealthcareAgent()
 
 @app.route("/", methods=["GET"])
-def root():
-    return jsonify({"message": "Healthcare MCP Server is running", "status": "healthy"})
+def index():
+    return render_template("index.html")
 
 @app.route("/health", methods=["GET"])
 def health_check():
@@ -21,12 +21,22 @@ def health_check():
 def process_query():
     data = request.get_json()
     try:
+        # Store user context as a document if provided
+        user_context = data.get("user_context")
+        if user_context:
+            agent.add_healthcare_knowledge([
+                {
+                    "text": user_context,
+                    "metadata": {"source": "user_context", "type": "user_submission"},
+                    "id": None
+                }
+            ])
         result = agent.process_query(
             user_input=data.get("query"),
             search_k=data.get("search_k", 5),
             include_context=data.get("include_context", True),
             category=data.get("category"),
-            user_context=data.get("user_context")
+            user_context=user_context
         )
         return jsonify(result)
     except Exception as e:

@@ -22,13 +22,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
+COPY mcp_server/templates ./mcp_server/templates
+COPY mcp_server/static ./mcp_server/static
 
 # Create directory for ChromaDB
 RUN mkdir -p /app/healthcare_db
 
 # Expose ports
 EXPOSE 8000
-EXPOSE 8501
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app
