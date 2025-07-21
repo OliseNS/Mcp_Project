@@ -354,3 +354,17 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ChromaDB](https://www.trychroma.com/) for vector database
 - [Streamlit](https://streamlit.io/) for the web interface
 - Medical professionals and organizations for healthcare guidance 
+
+## 🚀 Deploying on Railway
+
+1. **Push your code to GitHub.**
+2. **Go to [Railway](https://railway.app/)** and create a new project.
+3. **Connect your GitHub repository** to Railway.
+4. Railway will auto-detect the `Dockerfile` and build your app using it.
+5. **Set environment variables** (such as `OPENAI_API_KEY`) in the Railway dashboard under the Variables tab.
+6. **Deploy!** Railway will build and run your app. You will get a public URL once deployment is complete.
+
+**Note:**
+- The app will be served using Gunicorn for production reliability.
+- The server will listen on the port provided by Railway via the `$PORT` environment variable.
+- If you need a database, add it via Railway's Plugins and update your config accordingly. 
