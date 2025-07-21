@@ -29,7 +29,7 @@ COPY mcp_server/static ./mcp_server/static
 RUN mkdir -p /app/healthcare_db
 
 # Expose ports
-EXPOSE 8000
+EXPOSE 8080
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app
@@ -41,4 +41,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Default command
-CMD ["gunicorn", "mcp_server.api:app", "--bind", "0.0.0.0:${PORT:-8080}"] 
+CMD gunicorn mcp_server.api:app --bind 0.0.0.0:${PORT:-8080} 
